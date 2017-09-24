@@ -1,0 +1,75 @@
+---
+title: "Tigris package and census data"
+author: "Mark Hagemann"
+date: "September 21, 2017"
+output: html_document
+---
+
+It's past 11 on a week night and I just got an idea of something I'd like to make. I want to look at census data and housing prices over time and space. I'll start with my new hometown of Richmond, VA.
+
+I'll be using census TIGER data via the `tigris` R package.
+
+```{r}
+install.packages("tigris")
+library(tigris)
+library(sf)
+library(dplyr)
+library(ggplot2)
+```
+
+I'll try looking at "census tract" data. This is not the most granular available, but I'm told it is a rough approximation of neighborhoods. 
+
+```{r}
+tigris::counties()
+tracts <- tigris::tracts(state = "VA", county = "Richmond city")
+tracts <- as(tracts, "sf")
+# tracts2 <- tracts(state = "VA", county = "Richmond County")
+
+class(tracts)
+plot(tracts)
+glimpse(tracts)
+dim(tracts)
+```
+
+
+## Housing data
+
+I also got housing price data from Zillow, at the zip-code scale. Let's see what that looks like. 
+
+```{r}
+zillow <- read.csv("data/Neighborhood_MedianValuePerSqft_AllHomes.csv")
+names(zillow)
+zillow[1:10, 1:9]
+```
+
+Neat! 
+
+```{r}
+zillow %>% 
+  filter(Metro == "Richmond", State == "VA") %>% 
+  glimpse()
+```
+
+Zillow shapefiles are 
+
+```{r}
+list.files("data")
+
+zilhoods <- st_read("data/ZillowNeighborhoods-VA.shp") %>% 
+  filter(City == "Richmond")
+
+glimpse(zilhoods)
+glimpse(tracts)
+
+plot(zilhoods["Name"])
+plot(tracts["NAME"])
+```
+
+I'm going to have to get more granular. Drilling down to the block level. This will omit 1990 as a data point, and will start instead at 2000.
+
+```{r}
+blocks <- tigris::blocks("VA", "Richmond city")
+blocks <- as(blocks, "sf")
+st_write(blocks, dsn = "data/rva_blocks.shp")
+```
+

@@ -1,2 +1,2 @@
-# RVA_housing
-visualizing housing data for Richmond, VA
+# Visualizing Richmond, VA housing data
+
